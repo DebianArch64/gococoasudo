@@ -1,0 +1,1 @@
+int simple_cocoa(char *executable, char *command, char *message);
