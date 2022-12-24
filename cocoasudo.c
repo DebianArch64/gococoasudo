@@ -17,7 +17,7 @@
 //  limitations under the License.
 //
 
-#import <string.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -180,10 +180,9 @@ int cocoaSudo(char *executable, char *commandArgs[], char *icon, char *prompt) {
         
         do {
             pid = wait(&pidStatus);
-        }
-            while (pid != -1);
+        } while (pid != -1);
         
-            if (status == errAuthorizationSuccess) {
+        if (status == errAuthorizationSuccess) {
             retVal = 0;
         }
     }
@@ -200,66 +199,40 @@ int cocoaSudo(char *executable, char *commandArgs[], char *icon, char *prompt) {
     return retVal;
 }
 
-void usage(char *appNameFull) {
-    char *appName = strrchr(appNameFull, '/');
-
-    if (appName == NULL) {
-        appName = appNameFull;
-    }
-    else {
-        appName++;
-    }
-
-    fprintf(stderr, "usage: %s [--icon=icon.tiff] [--prompt=prompt...] command\n  --icon=[filename]: optional argument to specify a custom icon\n  --prompt=[prompt]: optional argument to specify a custom prompt\n", appName);
-}
-
 #include <assert.h>
-int split (const char *txt, char delim, char ***tokens)
-{
-    int *tklen, *t, count = 1;
-    char **arr, *p = (char *) txt;
+int split(char* str, const char delimeter, char*** args) {
+    int cnt = 1;
+    char* t = str;
 
-    while (*p != '\0') if (*p++ == delim) count += 1;
-    t = tklen = calloc (count, sizeof (int));
-    for (p = (char *) txt; *p != '\0'; p++) *p == delim ? *t++ : (*t)++;
-    *tokens = arr = malloc (count * sizeof (char *));
-    t = tklen;
-    p = *arr++ = calloc (*(t++) + 1, sizeof (char *));
-    while (*txt != '\0')
-    {
-        if (*txt == delim)
-        {
-            p = *arr++ = calloc (*(t++) + 1, sizeof (char *));
-            txt++;
-        }
-        else *p++ = *txt++;
+    while (*t == delimeter) t++;
+
+    char* t2 = t;
+    while (*(t2++))
+        if (*t2 == delimeter && *(t2 + 1) != delimeter && *(t2 + 1) != 0) cnt++;
+
+    (*args) = malloc(sizeof(char*) * (cnt + 1));
+
+    for(int i = 0; i < cnt; i++) {
+        char* ts = t;
+        while (*t != delimeter && *t != 0) t++;
+
+        int len = (t - ts + 1);
+        (*args)[i] = malloc(sizeof(char) * len);
+        memcpy((*args)[i], ts, sizeof(char) * (len - 1));
+        (*args)[i][len - 1] = 0;
+
+        while (*t == delimeter) t++;
     }
-    free (tklen);
-    return count;
-}
 
-int num_spaces(char *command)
-{
-    int counter = 0;
-    for (int i = 0; i < strlen(command); i++)
-        if (command[i] == ' ') counter++;
-    return counter;
+    return cnt;
 }
 
 int simple_cocoa(char *executable, char *command, char *message)
 {
     int status = -1;
     if (executable) {
-        char command_temp[strlen(command) + 1];
-        strcpy(command_temp, command);
-        int spaces = num_spaces(command_temp);
-        if ((spaces % 2) != 0)
-        {
-            char deli = ' ';
-            strncat(command_temp,&deli, 1);
-        }
         char **tokens;
-        int count = split(command_temp, ' ',&tokens);
+        int count = split(command, ' ',&tokens);
         if (tokens)
         {
             tokens[count] = NULL;
